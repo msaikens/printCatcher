@@ -9,9 +9,11 @@ project's `uru4000.c` driver.
 
 ## Why Fortran
 
-Learning exercise: binding a modern Fortran program directly to a C ABI
-library (libusb) via `bind(C)` interface blocks, exploring how Fortran's
-pointer/value semantics map onto C's pointer types.
+1. No pointer aliasing by default. In C, the compiler has to assume two pointers might point to overlapping memory unless you add restrict (and even then, compilers are conservative). Fortran's language rules forbid aliasing by default, so the compiler can vectorize/auto-parallelize array math far more aggressively without hand-holding. This is the actual reason Fortran still dominates numerical computing (LAPACK, BLAS, climate models, CFD) — not tradition, but that the compiler can prove more about the code.
+
+2. True native multidimensional arrays. Our fingerprint image is fundamentally a 2D array of pixel intensities. Fortran has real 2D arrays with slicing, whole-array arithmetic (image = image * 2), and reduction intrinsics (sum, maxval) built into the language. In C you're always faking 2D with pointer arithmetic over a flat buffer. For something like a ridge-orientation filter or a Gabor convolution over the image, that's less error-prone and often clearer in Fortran.
+
+3. Interoperability isn't lost. Since we're calling C via bind(C) already, a Fortran matching engine can equally be exposed to C (or C#, or eventually a Node addon) the same way. So going Fortran for the numerical core doesn't trap us — though to be fair, this cuts both ways: C is more universally embeddable (better FFI story into Node/Python/etc.), so this point favors Fortran only mildly, not decisively.
 
 ## Status
 
