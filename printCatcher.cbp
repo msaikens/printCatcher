@@ -39,8 +39,14 @@
 			<Add library="usb-1.0" />
 			<Add directory="lib" />
 		</Linker>
-		<Unit filename="main.f90">
+		<Unit filename="fp4500_device.f90">
+			<Option target="Debug" />
+		</Unit>
+		<Unit filename="libusb_bindings.f90">
 			<Option weight="0" />
+		</Unit>
+		<Unit filename="main.f90">
+			<Option weight="1" />
 		</Unit>
 		<Extensions />
 	</Project>
