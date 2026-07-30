@@ -20,7 +20,7 @@ project's `uru4000.c` driver.
 - [x] libusb bindings for init/exit, open/close, claim/release interface,
       control_transfer, bulk_transfer
 - [x] Device open + interface claim confirmed working against real hardware
-- [ ] Register read/write helpers (control transfer wrappers)
+- [x] Register read/write helpers (control transfer wrappers)
 - [ ] Device init sequence (power-up, encryption-disable patch)
 - [ ] Arm-for-capture / finger-detect / bulk image read
 - [ ] Raw image output
