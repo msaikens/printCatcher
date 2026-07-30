@@ -70,6 +70,32 @@ module fp4500_device
 
         end function
 
+        function power_up(dev) result(res)
+            type(c_ptr), value :: dev
+            integer(c_int) :: res
 
+            integer(c_int8_t) :: hwstat_buf(1)
+            integer(c_int) :: rc
+            integer :: attempt, i
+            do attempt = 1, 3
+                do i = 1, 100
+                    rc = reg_read(dev, REG_HWSTAT, hwstat_buf, int(1, c_int16_t))
+                    hwstat_buf(1) = ior(hwstat_buf(1), int(z'80', c_int8_t))
+                    rc = reg_write(dev, REG_HWSTAT, hwstat_buf, int(1, c_int16_t))
+                    rc = reg_read(dev, REG_HWSTAT, hwstat_buf, int(1, c_int16_t))
+
+                    if(iand(int(hwstat_buf(1), c_int32_t), int(z'80', c_int32_t)) == 0) then
+                        exit
+                    end if
+                end do
+
+                rc = wait_irq(dev, IRQDATA_SCANPWR_ON, int(300, c_int))
+
+                if (rc == 0) then
+                    res = 0
+                    return
+                end if
+            end do
+        end function
 
 end module
