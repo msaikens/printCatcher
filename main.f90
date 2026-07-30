@@ -1,6 +1,7 @@
 program fp4500
     use iso_c_binding
     use libusb_bindings
+    use fp4500_device
     implicit none
 
     type(c_ptr) :: ctx, dev
@@ -41,8 +42,18 @@ program fp4500
 
     print *, "Successfully claimed USB interface."
 
+    rc = init_device(dev)
+
+    if (rc /= 0) then
+        print *, "Device init failed, code=", rc
+    else
+        print *, "Device initialized and powered on."
+    end if
+
+    rc = libusb_release_interface(dev, 0)
+    call libusb_close(dev)
     call libusb_exit(ctx)
-    print *, "libusb_exit called, exiting"
+    print *, "Cleaned up, exiting"
 
     print *, "Press enter to exit ..."
     read(*, *)

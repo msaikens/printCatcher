@@ -3,6 +3,13 @@ module fp4500_device
     use libusb_bindings
     implicit none
 
+    interface
+        subroutine sleep_ms(ms) bind(C, name="Sleep")
+            import :: c_int32_t
+            integer(c_int32_t), value :: ms
+        end subroutine
+    end interface
+
     integer(c_int16_t), parameter :: REG_HWSTAT = int(z'07', c_int16_t)
     integer(c_int16_t), parameter :: REG_MODE = int(z'4e', c_int16_t)
     integer(c_int16_t), parameter :: MODE_AWAIT_FINGER_ON = int(z'10', c_int16_t)
@@ -96,6 +103,36 @@ module fp4500_device
                     return
                 end if
             end do
+        end function
+
+        function init_device(dev) result(res)
+            type(c_ptr), value :: dev
+            integer(c_int) :: res
+
+            integer(c_int8_t) :: hwstat_buf(1)
+            integer(c_int8_t) :: hwstat
+            integer(c_int) :: rc
+
+            rc = reg_read(dev, REG_HWSTAT, hwstat_buf, int(1, c_int16_t))
+            hwstat = hwstat_buf(1)
+
+            if (iand(int(hwstat, c_int32_t), int(z'84', c_int32_t)) == int(z'84', c_int32_t)) then
+                hwstat_buf(1) = iand(hwstat, int(z'0f', c_int8_t))
+                rc = reg_write(dev, REG_HWSTAT, hwstat_buf, int(1, c_int16_t))
+                call sleep_ms(int(50, c_int32_t))
+            end if
+
+            if (iand(int(hwstat, c_int32_t), int(z'80', c_int32_t)) == 0) then
+                hwstat_buf(1) = ior(hwstat, int(z'80', c_int8_t))
+                rc = reg_write(dev, REG_HWSTAT, hwstat_buf, int(1, c_int16_t))
+            end if
+
+            rc = reg_read(dev, REG_HWSTAT, hwstat_buf, int(1, c_int16_t))
+            hwstat_buf(1) = iand(hwstat_buf(1), int(z'0f', c_int8_t))
+            rc = reg_write(dev, REG_HWSTAT, hwstat_buf, int(1, c_int16_t))
+
+            res = power_up(dev)
+
         end function
 
 end module
