@@ -2,9 +2,22 @@
 
 A Fortran fingerprint capture tool for the DigitalPersona U.are.U 4500 reader
 (`VID_05BA&PID_000A`), built as an exercise in binding Fortran directly to C
-libraries via `ISO_C_BINDING`.
+libraries via `ISO_C_BINDING` — and, from there, a small monorepo packaging
+that capability for other languages to consume.
 
-The project has two paths, both still in the repo:
+Repo layout at a glance:
+
+- **root** — the original Fortran learning project (this README's main
+  subject): `main.f90` + `dpfpdd_bindings.f90`, and the archived raw-libusb
+  path (`libusb_bindings.f90` / `fp4500_device.f90`).
+- **`native/`** — the reusable native DLL built from that same SDK binding,
+  exposing a small C API for other languages to consume.
+- **`dotnet/`** — a C# wrapper + NuGet package around `native/`, plus a
+  sample console app.
+
+See [Packaging](#packaging) below for details on `native/` and `dotnet/`.
+
+The root Fortran project has two paths, both still in the repo:
 
 1. **Active path: the official SDK.** `main.f90` binds directly to
    DigitalPersona's own `dpfpdd.dll` (from the official U.are.U SDK) via
@@ -45,21 +58,30 @@ The project has two paths, both still in the repo:
 
 ## Packaging
 
-This repo's `dpfpdd_bindings.f90` is the shared foundation for two companion
-projects (separate repos, both built from the working SDK path above):
+This repo also contains two companion projects, both built on top of the
+working SDK path above, sharing this repo's `dpfpdd_bindings.f90` as their
+common foundation:
 
-- **`printCatcher.Native`** — a thin Fortran-compiled DLL
-  (`printcatcher_native.dll`) that wraps the SDK capture flow behind a small,
-  stable C API: `pc_init`, `pc_open`, `pc_capture`, `pc_close`, `pc_exit`.
-  This is the reusable surface any other language binds against, instead of
-  each ecosystem re-implementing the `dpfpdd` struct marshaling itself.
-- **`PrintCatcher` (NuGet)** — a C# wrapper (`FingerprintReader`,
-  `FingerprintImage`) around `printCatcher.Native` via P/Invoke, packaged
-  with both native DLLs (`printcatcher_native.dll` and `dpfpdd.dll`) bundled
-  as `win-x64` runtime assets. Verified end-to-end against real hardware
-  through an actual `PackageReference` consumption (not just a project
-  reference) — a separate console app captured a real fingerprint through
-  the packaged library.
+- **`native/`** — a thin Fortran-compiled DLL (`printcatcher_native.dll`)
+  that wraps the SDK capture flow behind a small, stable C API: `pc_init`,
+  `pc_open`, `pc_capture`, `pc_close`, `pc_exit`. This is the reusable
+  surface any other language binds against, instead of each ecosystem
+  re-implementing the `dpfpdd` struct marshaling itself.
+- **`dotnet/PrintCatcher/`** — a C# wrapper (`FingerprintReader`,
+  `FingerprintImage`) around `native/` via P/Invoke, packaged with both
+  native DLLs (`printcatcher_native.dll` and `dpfpdd.dll`) bundled as
+  `win-x64` runtime assets, ready for `dotnet pack`. Includes a custom
+  `DllImportResolver` (`NativeLibraryResolver.cs`) so native loading works
+  identically whether this project is consumed as a real NuGet package or
+  referenced directly (`ProjectReference`) — .NET only auto-wires
+  `runtimes/<rid>/native/` probing for a properly restored package, not a
+  plain project reference, so without this the sample app below would fail
+  to find the native DLL despite it being right there in the output folder.
+- **`dotnet/PrintCatcher.TestConsole/`** — a minimal sample app
+  (`ProjectReference`s `PrintCatcher` directly) that exercises the whole
+  pipeline: open reader, wait for finger, capture, save as PGM. Verified
+  end-to-end against real hardware both this way and via an actual packed
+  `.nupkg` consumed through `PackageReference` from a local feed.
 
 One naming gotcha worth knowing if you touch this again: the native DLL is
 named `printcatcher_native.dll`, deliberately *not* `printcatcher.dll` —
@@ -155,3 +177,9 @@ dlltool -d dpfpdd.def --dllname dpfpdd.dll -l libdpfpdd.a
 - `lib/` — prebuilt libusb-1.0 MinGW64 binaries (official libusb GitHub
   release v1.0.30) and the official SDK's `dpfpdd.dll` + generated MinGW
   import library.
+- `native/` — the packaged native DLL (`dpfpdd_bindings.f90` +
+  `printcatcher_api.f90`, a Code::Blocks project building a DLL instead of
+  an `.exe`). See [Packaging](#packaging).
+- `dotnet/PrintCatcher/` — C# wrapper + NuGet package around `native/`.
+- `dotnet/PrintCatcher.TestConsole/` — sample console app exercising the
+  wrapper end-to-end.

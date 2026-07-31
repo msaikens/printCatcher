@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <PackageId>PrintCatcher</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Mitchell Aikens</Authors>
+    <Description>
+      .NET wrapper for a DigitalPersona U.are.U 4500 fingerprint reader, via
+      a small native Fortran shim binding to the official U.are.U SDK
+      (dpfpdd.dll). Windows-only.
+    </Description>
+    <PackageTags>fingerprint;biometric;digitalpersona;uareu</PackageTags>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Bundle the native DLLs as runtime assets so consumers get them
+         automatically via PackageReference, with no manual DLL copying
+         needed, and also copy them to the local build output for anything
+         referencing this project directly during development. -->
+    <None Include="runtimes\win-x64\native\printcatcher_native.dll"
+          Pack="true"
+          PackagePath="runtimes/win-x64/native/printcatcher_native.dll"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="runtimes\win-x64\native\dpfpdd.dll"
+          Pack="true"
+          PackagePath="runtimes/win-x64/native/dpfpdd.dll"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

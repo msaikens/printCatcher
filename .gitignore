@@ -3,3 +3,5 @@ bin/
 *.depend
 *.layout
 .sdk/
+*.mod
+.vs/
