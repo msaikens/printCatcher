@@ -53,6 +53,8 @@ The root Fortran project has two paths, both still in the repo:
       challenge/response handshake — not pursued further, see Findings.
 - [x] Packaged as a real, installable NuGet package (`PrintCatcher`) — see
       [Packaging](#packaging) below.
+- [x] Published: [`PrintCatcher` on nuget.org](https://www.nuget.org/packages/PrintCatcher)
+      (0.1.0).
 - [ ] Node.js binding — planned, not started.
 - [ ] Other language bindings (Python, etc.) — planned, not started.
 
