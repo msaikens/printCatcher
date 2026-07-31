@@ -38,6 +38,43 @@ The project has two paths, both still in the repo:
       found via Wireshark comparison against the official SDK's own traffic).
 - [ ] Raw libusb path: arm-for-capture blocked on an undocumented
       challenge/response handshake — not pursued further, see Findings.
+- [x] Packaged as a real, installable NuGet package (`PrintCatcher`) — see
+      [Packaging](#packaging) below.
+- [ ] Node.js binding — planned, not started.
+- [ ] Other language bindings (Python, etc.) — planned, not started.
+
+## Packaging
+
+This repo's `dpfpdd_bindings.f90` is the shared foundation for two companion
+projects (separate repos, both built from the working SDK path above):
+
+- **`printCatcher.Native`** — a thin Fortran-compiled DLL
+  (`printcatcher_native.dll`) that wraps the SDK capture flow behind a small,
+  stable C API: `pc_init`, `pc_open`, `pc_capture`, `pc_close`, `pc_exit`.
+  This is the reusable surface any other language binds against, instead of
+  each ecosystem re-implementing the `dpfpdd` struct marshaling itself.
+- **`PrintCatcher` (NuGet)** — a C# wrapper (`FingerprintReader`,
+  `FingerprintImage`) around `printCatcher.Native` via P/Invoke, packaged
+  with both native DLLs (`printcatcher_native.dll` and `dpfpdd.dll`) bundled
+  as `win-x64` runtime assets. Verified end-to-end against real hardware
+  through an actual `PackageReference` consumption (not just a project
+  reference) — a separate console app captured a real fingerprint through
+  the packaged library.
+
+One naming gotcha worth knowing if you touch this again: the native DLL is
+named `printcatcher_native.dll`, deliberately *not* `printcatcher.dll` —
+that name collided case-insensitively with the C# assembly `PrintCatcher.dll`
+sitting in the same output folder, and Windows' loader would resolve
+`DllImport("printcatcher")` to the wrong file (our own managed assembly,
+which of course has no `pc_init` export), producing a confusing
+`EntryPointNotFoundException` instead of a `DllNotFoundException`.
+
+**Planned next:** a Node.js binding (likely via FFI — e.g. `koffi` — calling
+`printcatcher_native.dll`'s exports directly, no native build toolchain
+needed on the consumer's end) and potentially other language bindings
+(Python via `ctypes`/`cffi`, etc.), all built the same way: bind against the
+native DLL's small C API rather than re-deriving the SDK struct layouts per
+language.
 
 ## Findings
 
